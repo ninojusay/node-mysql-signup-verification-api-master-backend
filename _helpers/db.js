@@ -1,6 +1,7 @@
 const config = require('config.json');
 const mysql = require('mysql2/promise');
-const { Sequelize } = require('sequelize');
+const { Sequelize, DataTypes } = require('sequelize'); // ✅ Include DataTypes
+
 
 module.exports = db = {};
 
@@ -18,6 +19,7 @@ async function initialize() {
     // init models and add them to the exported db object
     db.Account = require('../accounts/account.model')(sequelize);
     db.RefreshToken = require('../accounts/refresh-token.model')(sequelize);
+   db.Teacher = require('../models/teacher.model')(sequelize, DataTypes); 
 
     // define relationships
     db.Account.hasMany(db.RefreshToken, { onDelete: 'CASCADE' });
@@ -26,3 +28,6 @@ async function initialize() {
     // sync all models with database
     await sequelize.sync();
 }
+
+
+
