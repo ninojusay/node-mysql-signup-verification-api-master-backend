@@ -13,7 +13,7 @@ if (!fs.existsSync(path)) {
 
 const swaggerDocument = YAML.load(path);
 
-// Serve Swagger UI at /api-docs route
-router.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// mount it directly on root ('/')
+router.use(swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 module.exports = router;

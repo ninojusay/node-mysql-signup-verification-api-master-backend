@@ -1,4 +1,4 @@
-﻿﻿require('rootpath')();  // Ensure root path resolution
+﻿require('rootpath')();  // Ensure root path resolution
 const config = require('config.json');
 const express = require('express');
 const app = express();
@@ -8,7 +8,7 @@ const cors = require('cors');
 const errorHandler = require('_middleware/error-handler'); // Error handler middleware
 const { sequelize } = require('./_helpers/db');  // Import the sequelize instance
 const teacherRoutes = require('./routes/teacher.routes');  // Import teacher routes
-
+const evaluationRoutes = require('./routes/evaluation.routes');
 
 
 // Middleware to parse incoming requests
@@ -22,7 +22,7 @@ app.use(cors({ origin: (origin, callback) => callback(null, true), credentials: 
 // API Routes
 app.use('/accounts', require('./accounts/accounts.controller'));  // Accounts controller
 app.use('/api/teachers', teacherRoutes);  // Register routes for Teacher CRUD operations
-
+app.use('/api/evaluations', evaluationRoutes);
 
 
 

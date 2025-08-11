@@ -1,33 +1,43 @@
-const Evaluation = require('../models/evaluation.model'); // The evaluation model
+const db = require('../_helpers/db');
+const Evaluation = db.Evaluation;
+const EvaluationAnswer = db.EvaluationAnswer;
+const Teacher = db.Teacher;
 
-// Create a new evaluation form
 exports.createEvaluation = async (req, res) => {
   try {
-    const { name, criteria, dueDate, createdBy } = req.body;
-    const evaluation = new Evaluation({
-      name,
-      criteria,
-      dueDate,
-      createdBy,
-      evaluationFile: req.file ? req.file.path : null  // Store file path if uploaded
-    });
+    const { teacherId, title, answers } = req.body;
+    const studentId = req.user.id;
 
-    await evaluation.save();
+    if (!teacherId || !Array.isArray(answers) || answers.length === 0) {
+      return res.status(400).json({ message: 'Missing required fields or answers' });
+    }
 
-    res.status(201).json({ message: 'Evaluation form created successfully', evaluation });
+    // Validate teacher exists
+    const teacher = await Teacher.findByPk(teacherId);
+    if (!teacher) {
+      return res.status(400).json({ message: 'Invalid teacherId' });
+    }
+
+    // Calculate average rating
+    const averageRating = answers.reduce((sum, a) => sum + a.rating, 0) / answers.length;
+
+    // Create evaluation record with average rating
+    const evaluation = await Evaluation.create({ studentId, teacherId, title, averageRating });
+
+    // Prepare answers data (each with optional long comment)
+    const answersData = answers.map(a => ({
+      evaluationId: evaluation.id,
+      questionId: a.questionId,
+      rating: a.rating,
+      comment: a.comment || null
+    }));
+
+    // Bulk insert answers
+    await EvaluationAnswer.bulkCreate(answersData);
+
+    return res.status(201).json({ message: 'Evaluation submitted successfully', evaluationId: evaluation.id, averageRating });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to create evaluation form' });
-  }
-};
-
-// Get all evaluations
-exports.getEvaluations = async (req, res) => {
-  try {
-    const evaluations = await Evaluation.find();
-    res.status(200).json(evaluations);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to fetch evaluations' });
+    console.error('Create evaluation error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
